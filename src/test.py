@@ -1,26 +1,26 @@
 import pandas as pd
 import numpy as np
+import random
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from matplotlib import pyplot
-from sklearn import preprocessing
 
 
 def main():
-    filas=600
-    data = pd.read_csv("C:/Users/Javi/Desktop/verbal_autopsies_clean.csv", nrows=filas)
+    p = 1.00
+    data = pd.read_csv("../data/verbal_autopsies_clean.csv", header=0, skiprows=lambda i: i > 0 and random.random() > p)
+    print('Numero de instancias: {}'.format(len(data)))
     clases = np.array(data['gs_text34'])
-    clases_light = clases[:filas]
 
     data_tfidf = create_tfidf(data)
 
-    info = np.column_stack((data_tfidf, clases_light))
+    instances = np.column_stack((data_tfidf, clases))
 
-    lab_enc = preprocessing.OrdinalEncoder()
-    instances = lab_enc.fit_transform(info)
+    #lab_enc = preprocessing.OrdinalEncoder()
+    #instances = lab_enc.fit_transform(info)
 
     # configure bootstrap
     n_iterations = 10
@@ -28,27 +28,28 @@ def main():
 
     # run bootstrap
     stats = list()
-    #for i in range(n_iterations):#
 
     #Hacemos el Bootstrap#
-    train, test = bootstrap(instances, n_size)
+    #train, test = bootstrap(instances, n_size)
+    for i in range(n_iterations):
+    # Separamos en test y train
+        train, test = train_test_split(instances, test_size=0.368)
+        train = bootstrap_single(train, len(train))
+        test = bootstrap_single(test, len(test))
 
+        # fit model
+        print("Empieza el entrenamiento del LogisticRegression")
+        model = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+        model.fit(train[:, :-1], train[:, -1])
+        print("Termina el entrenamiento del LogisticRegression")
 
-    # fit model
-    # model = DecisionTreeClassifier()
-    print("Empieza el entrenamiento del LogisticRegression")
-    model = LogisticRegression(solver='saga', multi_class='multinomial', max_iter=200)
-    model.fit(train[:, :-1], train[:, -1])
-    print("Termina el entrenamiento del LogisticRegression")
-
-
-    # evaluate model
-    print("Empieza la evaluación del LogisticRegression")
-    predictions = model.predict(test[:, :-1])
-    score = accuracy_score(test[:, -1], predictions)
-    print(score)
-    stats.append(score)
-    print("Termina la evaluación del LogisticRegression")
+        # evaluate model
+        print("Empieza la evaluación del LogisticRegression")
+        predictions = model.predict(test[:, :-1])
+        score = accuracy_score(test[:, -1], predictions)
+        print(score)
+        stats.append(score)
+        print("Termina la evaluación del LogisticRegression")
     # plot scores
     pyplot.hist(stats)
     pyplot.show()
@@ -62,11 +63,11 @@ def main():
 
 
 def create_tfidf(data_frame):
+
     tfidf_vectorizer = TfidfVectorizer(use_idf=True)
     tfidf_matrix = tfidf_vectorizer.fit_transform(data_frame['open_response'].values.astype('U'))
 
     return tfidf_matrix.A
-
 
 
 def bootstrap(instances, n_size):
@@ -78,6 +79,15 @@ def bootstrap(instances, n_size):
     print("Finaliza el Bootstrap")
 
     return boot, test
+
+
+def bootstrap_single(instances, n_size):
+    # prepare train and test sets
+    print("Empieza el Bootstrap_single")
+    boot = resample(instances, replace=True, n_samples=n_size, random_state=1)
+    print("Finaliza el Bootstrap_single")
+
+    return boot
 
 if __name__ == '__main__':
     main()
