@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import sys
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils import resample
 from sklearn.tree import DecisionTreeClassifier
@@ -12,7 +11,7 @@ from sklearn import preprocessing
 
 def main():
     filas=600
-    data = pd.read_csv("../data/verbal_autopsies_clean.csv", nrows=filas)
+    data = pd.read_csv("C:/Users/Javi/Desktop/verbal_autopsies_clean.csv", nrows=filas)
     clases = np.array(data['gs_text34'])
     clases_light = clases[:filas]
 
@@ -29,21 +28,27 @@ def main():
 
     # run bootstrap
     stats = list()
-    for i in range(n_iterations):
-        # prepare train and test sets
-        train = resample(instances, n_samples=n_size)
-        test = np.array([x for x in instances if x.tolist() not in train.tolist()])
+    #for i in range(n_iterations):#
 
-        # fit model
-        # model = DecisionTreeClassifier()
-        model = LogisticRegression(solver='saga', multi_class='multinomial', max_iter=200)
-        model.fit(train[:, :-1], train[:, -1])
+    #Hacemos el Bootstrap#
+    train, test = bootstrap(instances, n_size)
 
-        # evaluate model
-        predictions = model.predict(test[:, :-1])
-        score = accuracy_score(test[:, -1], predictions)
-        print(score)
-        stats.append(score)
+
+    # fit model
+    # model = DecisionTreeClassifier()
+    print("Empieza el entrenamiento del LogisticRegression")
+    model = LogisticRegression(solver='saga', multi_class='multinomial', max_iter=200)
+    model.fit(train[:, :-1], train[:, -1])
+    print("Termina el entrenamiento del LogisticRegression")
+
+
+    # evaluate model
+    print("Empieza la evaluación del LogisticRegression")
+    predictions = model.predict(test[:, :-1])
+    score = accuracy_score(test[:, -1], predictions)
+    print(score)
+    stats.append(score)
+    print("Termina la evaluación del LogisticRegression")
     # plot scores
     pyplot.hist(stats)
     pyplot.show()
@@ -62,6 +67,17 @@ def create_tfidf(data_frame):
 
     return tfidf_matrix.A
 
+
+
+def bootstrap(instances, n_size):
+    
+    # prepare train and test sets
+    print("Empieza el Bootstrap")
+    boot = resample(instances, replace=True, n_samples=n_size, random_state=1)
+    test = np.array([x for x in instances if x.tolist() not in boot.tolist()])
+    print("Finaliza el Bootstrap")
+
+    return boot, test
 
 if __name__ == '__main__':
     main()
