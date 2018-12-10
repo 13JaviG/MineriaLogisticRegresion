@@ -8,6 +8,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from matplotlib import pyplot
+from src.voting_classifier import Voting_Classifier
 
 
 def main():
@@ -35,18 +36,26 @@ def main():
     for i in range(n_iterations):
     # Separamos en test y train
         #train, test = train_test_split(instances, test_size=0.368)
-        train, test = bootstrap(instances, len(instances))
+        train, test = bootstrap(instances, n_size)
         #test = bootstrap(test, len(test))
 
+        print("Creamos el Voting Classifier")
+        classifier = Voting_Classifier()
+
+        classifier.create_estimators()
+
         # fit model
-        print("Empieza el entrenamiento del LogisticRegression")
-        model = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-        model.fit(train[:, :-1], train[:, -1]) #MIRAR ESTO!!!! PUEDE QUE ESTÉ MAL!!!
-        print("Termina el entrenamiento del LogisticRegression")
+        print("Empieza el entrenamiento del VOTING")
+
+        classifier.train(train[:, :-1], train[:, -1])
+
+        #model = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+        #model.fit(train[:, :-1], train[:, -1]) #MIRAR ESTO!!!! PUEDE QUE ESTÉ MAL!!!
+        print("Termina el entrenamiento del VOTING")
 
         # evaluate model
-        print("Empieza la evaluación del LogisticRegression")
-        predictions = model.predict(test[:, :-1])
+        print("Empieza la evaluación del VOTING")
+        predictions = classifier.predict(test[:, :-1]) #model.predict(test[:, :-1])
         matriz_confusion = confusion_matrix(test[:, -1], predictions)
         print(matriz_confusion)
         score = accuracy_score(test[:, -1], predictions)
