@@ -4,16 +4,13 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 
-class VotingClassifier():
+class Voting_Classifier:
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         self._instances = None
         self._classes = None
-        estimators = self.create_estimators()
-        self._model = VotingClassifier(estimators, voting='hard')
+        self._model = None
         self._trained_model = None
-        self._kwargs = kwargs
-
 
 
     def train(self, instances, classes):
@@ -23,7 +20,7 @@ class VotingClassifier():
 
 
     def predict(self, instances):
-        pass
+        return self._model.predict(instances)
 
 
     def create_estimators (self):
@@ -32,10 +29,16 @@ class VotingClassifier():
         clf1 = LogisticRegression(solver='sag'  ,multi_class='multinomial', random_state=1)
         c2f2 = LogisticRegression(solver='saga', multi_class='multinomial', random_state=1)
         c3f3 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=1)
+        c4f4 = LogisticRegression(solver='sag', multi_class='multinomial', random_state=3)
+        c5f5 = LogisticRegression(solver='saga', multi_class='multinomial', random_state=3)
+        c6f6 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=3)
 
-        estimators = [clf1, c2f2, c3f3]
 
-        return estimators
+
+        estimators = [('sag',clf1), ('saga',c2f2), ('lbfgs',c3f3),('sag1',c4f4), ('saga1',c5f5), ('lbfgs1',c6f6)]
+        clasificador = VotingClassifier(estimators)
+        self._model = clasificador
+
 
     @staticmethod
     def k_fold_cross_v(k, instances, classes):
