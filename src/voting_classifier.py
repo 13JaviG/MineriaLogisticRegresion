@@ -1,6 +1,5 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import VotingClassifier
-import numpy as np
 from sklearn.model_selection import KFold
 
 
@@ -12,30 +11,24 @@ class Voting_Classifier:
         self._model = None
         self._trained_model = None
 
-
     def train(self, instances, classes):
         self._instances = instances
         self._classes = classes
         self._trained_model = self._model.fit(instances, classes)
 
-
     def predict(self, instances):
         return self._model.predict(instances)
 
-
     def create_estimators (self):
 
-
-        clf1 = LogisticRegression(solver='sag'  ,multi_class='multinomial', random_state=1)
+        clf1 = LogisticRegression(solver='sag', multi_class='multinomial', random_state=1)
         c2f2 = LogisticRegression(solver='saga', multi_class='multinomial', random_state=1)
         c3f3 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=1)
         c4f4 = LogisticRegression(solver='sag', multi_class='multinomial', random_state=3)
         c5f5 = LogisticRegression(solver='saga', multi_class='multinomial', random_state=3)
         c6f6 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=3)
 
-
-
-        estimators = [('sag',clf1), ('saga',c2f2), ('lbfgs',c3f3),('sag1',c4f4), ('saga1',c5f5), ('lbfgs1',c6f6)]
+        estimators = [('sag', clf1), ('saga', c2f2), ('lbfgs', c3f3), ('sag1', c4f4), ('saga1', c5f5), ('lbfgs1', c6f6)]
         clasificador = VotingClassifier(estimators)
         self._model = clasificador
 
