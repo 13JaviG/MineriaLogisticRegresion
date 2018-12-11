@@ -10,22 +10,22 @@ from src.logistic import Logistic
 
 
 def main():
+    #Obtener instancias del conjunto de datos
     p = 1.00
     data = pd.read_csv("../data/verbal_autopsies_clean.csv", header=0, skiprows=lambda i: i > 0 and random.random() > p)
     print('Numero de instancias: {}'.format(len(data)))
     clases = np.array(data['gs_text34'])
     indices = np.array(data['newid'])
 
-    print("Empieza TFIDF")
     data_tfidf = create_tfidf(data)
     instances = np.column_stack((data_tfidf, clases))
     instances = np.column_stack((indices, instances))
 
     # configure bootstrap
-    n_iterations = 6
+    n_iterations = 5
     n_size = int(len(instances))
 
-    # run bootstrap
+    # configurar clasificador
     stats = list()
     classifier = Logistic('lbfgs', 'multinomial', 1)
 

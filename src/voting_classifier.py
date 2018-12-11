@@ -21,14 +21,14 @@ class Voting_Classifier:
 
     def create_estimators (self):
 
-        clf1 = LogisticRegression(solver='sag', multi_class='multinomial', random_state=1)
-        c2f2 = LogisticRegression(solver='saga', multi_class='multinomial', random_state=1)
-        c3f3 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=1)
-        c4f4 = LogisticRegression(solver='sag', multi_class='multinomial', random_state=3)
-        c5f5 = LogisticRegression(solver='saga', multi_class='multinomial', random_state=3)
-        c6f6 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=3)
+        clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=1)
+        c2f2 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=2)
+        c3f3 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=3)
+        c4f4 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=4)
+        c5f5 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=5)
+        c6f6 = LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=6)
 
-        estimators = [('sag', clf1), ('saga', c2f2), ('lbfgs', c3f3), ('sag1', c4f4), ('saga1', c5f5), ('lbfgs1', c6f6)]
+        estimators = [('lbfgs', clf1), ('lbfgs2', c2f2), ('lbfgs3', c3f3), ('lbfgs4', c4f4), ('lbfgs5', c5f5), ('lbfgs6', c6f6)]
         clasificador = VotingClassifier(estimators)
         self._model = clasificador
 
