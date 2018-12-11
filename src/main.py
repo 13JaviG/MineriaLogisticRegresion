@@ -7,32 +7,27 @@ from matplotlib import pyplot
 from src.tfidf import create_tfidf
 from src.bootstrap import bootstrap
 from src.logistic import Logistic
-import sys
 
 
 def main():
-    p = 0.15
+    p = 1.00
     data = pd.read_csv("../data/verbal_autopsies_clean.csv", header=0, skiprows=lambda i: i > 0 and random.random() > p)
-    #data = pd.read_csv("../data/verbal_autopsies_clean.csv", header=0)
-   # print('Numero de instancias: {}'.format(len(data)))
+    print('Numero de instancias: {}'.format(len(data)))
     clases = np.array(data['gs_text34'])
+    indices = np.array(data['newid'])
 
     print("Empieza TFIDF")
     data_tfidf = create_tfidf(data)
     instances = np.column_stack((data_tfidf, clases))
-   # instances = np.column_stack((np.array(data['newid']), instances))
+    instances = np.column_stack((indices, instances))
+
     # configure bootstrap
-    n_iterations = 1
+    n_iterations = 6
     n_size = int(len(instances))
-    ''' data = None
-    clases = None
-    data_tfidf = None
-    train, test = bootstrap(instances, n_size)
-    sys.exit()'''
+
     # run bootstrap
     stats = list()
     classifier = Logistic('lbfgs', 'multinomial', 1)
-
 
     for i in range(n_iterations):
         # Separamos en test y train con bootstrap
