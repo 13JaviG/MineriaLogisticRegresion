@@ -1,6 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 
-
+# Clase que crea un clasificador Logistic Regression
 class Logistic:
 
     # Inicializamos el Logistic

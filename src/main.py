@@ -1,27 +1,32 @@
 import pandas as pd
 import numpy as np
 import random
-import sklearn.metrics as mt
-from matplotlib import pyplot
 from src.tfidf import create_tfidf
 from src.bootstrap import bootstrap
 from src.logistic import Logistic
 from src.results import Resultado
-import sys
+from src.voting_classifier import Voting_Classifier
+
+# Clase principal que ejecuta el programma:
+# A partir de un conjunto de datos (autopsias verbales) en formato tf-idf realiza dos clasificaciones:
+# -Logistic Regression (con varios bootstrap)
+# -Voting Classifier de varios Logistic Regression
+# y exporta los resultados (figuras de mérito) a un fichero de textos
 
 
 def main():
     #Obtener instancias del conjunto de datos
-    p = 0.20
+    p = 1.00
     data = pd.read_csv("../data/verbal_autopsies_clean.csv", header=0, skiprows=lambda i: i > 0 and random.random() > p)
     print('Numero de instancias: {}'.format(len(data)))
     clases = np.array(data['gs_text34'])
     clasesunique = np.unique(clases)
+    num_classes = len(clasesunique)
     indices = np.array(data['newid'])
-
+    #Convertir a tfidf
     data_tfidf = create_tfidf(data)
-    instances = np.column_stack((data_tfidf, clases))
-    instances = np.column_stack((indices, instances))
+    instances_sinclase = np.column_stack((data_tfidf, clases))
+    instances = np.column_stack((indices, instances_sinclase))
 
     # configure bootstrap
     n_iterations = 5
@@ -30,8 +35,7 @@ def main():
     # configurar clasificador Logistic
     classifier = Logistic('lbfgs', 'multinomial', 1)
 
-    accuracylist = list()
-
+    avg_precision, avg_recall, avg_accuracy, avg_f_score, avg_kappa = 0, 0, 0, 0, 0
     for i in range(n_iterations):
         # Separamos en test y train con bootstrap
         train, test = bootstrap(instances, n_size)
@@ -43,24 +47,62 @@ def main():
 
         # evaluate model
         print("Empieza la evaluación del LogisticRegression")
+        trueclasses = test[:, -1]
         predictions = classifier.predict(test[:, :-1])
 
-        accuracy = mt.accuracy_score(test[:, -1], predictions)
-        accuracylist.append(accuracy)
+        # Obtener figuras de méritos
+        results = Resultado(trueclasses, predictions)
+        avg_precision += results.precision()
+        avg_recall += results.recall()
+        avg_accuracy += results.accuracy()
+        avg_f_score += results.f_score()
+        avg_kappa += results.kappa()
+
         print("Termina la evaluación del LogisticRegression")
 
-    # plot scores
-    pyplot.hist(accuracylist)
-    pyplot.show()
-    # confidence intervals
-    alpha = 0.95
-    p = ((1.0 - alpha) / 2.0) * 100
-    lower = max(0.0, np.percentile(accuracylist, p))
-    p = (alpha + ((1.0 - alpha) / 2.0)) * 100
-    upper = min(1.0, np.percentile(accuracylist, p))
-    print('%.1f confidence interval %.1f%% and %.1f%%' % (alpha * 100, lower * 100, upper * 100))
+    # Exportamos los ficheros de los resultados del Logistic en la carpeta results
+    favg_precision = avg_precision / n_iterations
+    favg_recall = avg_recall / n_iterations
+    favg_accuracy = avg_accuracy / n_iterations
+    favg_f_score = avg_f_score / n_iterations
+    favg_kappa = avg_kappa / n_iterations
 
-    resultsPath = '../results/resultado_Baseline.txt'
+    res_baseline = '==============================================================\n'
+    res_baseline += 'MEDIA DE TODAS LAS CLASES MODELO BASELINE (LOGISTIC REGRESSION\n'
+    res_baseline += '==============================================================\n'
+    res_baseline += 'Precision: \t{}\n'.format(favg_precision)
+    res_baseline += 'Recall: \t{}\n'.format(favg_recall)
+    res_baseline += 'Accuracy: \t{}\n'.format(favg_accuracy)
+    res_baseline += 'F-Score: \t{}\n'.format(favg_f_score)
+    res_baseline += 'Kappa: \t\t{}\n'.format(favg_kappa)
+
+    file = open('../results/resultado_baseline.txt', 'w')
+    file.write(res_baseline)
+    file.close()
+
+    # Clasificación VotingClassifier
+    voting = Voting_Classifier()
+    rs = Resultado()
+    results = voting.k_fold_cross_v(10, data_tfidf, clases, rs)
+
+    #Exportamos los resultados en la carpeta results
+    favg_precision_2 = results[0]
+    favg_recall_2 = results[1]
+    favg_f_score_2 = results[2]
+    favg_accuracy_2 = results[3]
+    favg_kappa_2 = results[4]
+    res_voting = '=============================================================\n'
+    res_voting += 'MEDIA DE TODAS LAS CLASES VOTING CLASSIFIER (VARIOS LOGISTIC)\n'
+    res_voting += '=============================================================\n'
+    res_voting += 'Precision: \t{}\n'.format(favg_precision_2)
+    res_voting += 'Recall: \t{}\n'.format(favg_recall_2)
+    res_voting += 'Accuracy: \t{}\n'.format(favg_accuracy_2)
+    res_voting += 'F-Score: \t{}\n'.format(favg_f_score_2)
+    res_voting += 'Kappa: \t\t{}\n'.format(favg_kappa_2)
+
+    file = open('../results/resultado_Voting.txt', 'w')
+    file.write(res_voting)
+    file.close()
 
 
 if __name__ == '__main__':
