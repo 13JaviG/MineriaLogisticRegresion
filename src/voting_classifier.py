@@ -39,19 +39,44 @@ class Voting_Classifier:
 
 
     @staticmethod
-    def k_fold_cross_v(k, instances, classes):
+    def k_fold_cross_v(k, instances, classes, rs):
 
         X = instances
         y = classes
         kf = KFold(n_splits=k, shuffle=True)
+
+        precision_ar = []
+        recall_ar = []
+        f_score_ar =  []
+        accuracy_ar = []
+
         predict = {}
+
         for train_index, test_index in kf.split(X):
             X_train, X_test = X[train_index], X[test_index]
             voting_model = VotingClassifier()
             voting_model.train(X_train, y)
             predict = voting_model.predict(X_test)
 
-        return predict
+            #Cambiamos los atributos del objeto Results
+            rs.trueclasses(X_test[:,-1])
+            rs.trueclasses(predict)
+
+            #Guardamos los resultados de cada iteración en un array
+            precision_ar = precision_ar.append(rs.precision())
+            recall_ar = recall_ar.append(rs.recall())
+            f_score_ar = f_score_ar.append(rs.f_score())
+            accuracy_ar = accuracy_ar.append(rs.accuracy())
+
+        #Hacemos la media de todos los resultados
+        precision = np.mean(precision_ar)
+        recall = np.mean(recall_ar)
+        f_score = np.mean(f_score_ar)
+        accuracy = np.mean(accuracy_ar)
+
+        resultados = [precision, recall, f_score, accuracy]
+
+        return resultados
 
     def _results_to_text(self, indiv_results):
         text_results = {}
@@ -134,3 +159,5 @@ class Voting_Classifier:
         for class_name in text_results:
             final_text += '\n{}'.format(text_results[class_name])
         return final_text
+
+
